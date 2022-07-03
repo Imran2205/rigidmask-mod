@@ -112,7 +112,11 @@ elif args.dataset == 'viper_test':
 elif args.dataset == 'tum':
     from dataloader import tumlist as DA
     maxw,maxh = [int(args.testres*1024), int(args.testres*448)]
-    test_left_img, test_right_img ,_= DA.dataloader(args.datapath)  
+    test_left_img, test_right_img ,_= DA.dataloader(args.datapath)
+else:
+    from dataloader import kitti15list as DA
+    maxw,maxh = [int(args.testres*1280), int(args.testres*384)]
+    test_left_img, test_right_img ,_= DA.dataloader(args.datapath)
 
 max_h = int(maxh // 64 * 64)
 max_w = int(maxw // 64 * 64)
