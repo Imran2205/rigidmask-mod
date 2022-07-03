@@ -1,10 +1,11 @@
+import _init_paths
 import os
 import sys
 sys.path.insert(0,os.getcwd())
 from matplotlib import pyplot as plt
 import numpy as np
 import sys
-sys.path.insert(0,'utils')
+sys.path.insert(0, 'utils')
 from utils.flowlib import flow_to_image, read_flow, compute_color, visualize_flow
 from utils.io import mkdir_p
 import pdb
