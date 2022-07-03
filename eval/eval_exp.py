@@ -26,13 +26,13 @@ args = parser.parse_args()
 # dataloader
 if args.dataset == '2015':
     from dataloader import kitti15list as DA
-    datapath = '/ssd/kitti_scene/training/'
+    datapath = '/content/dataset/data_scene_flow/training'
 elif args.dataset == '2015val':
     from dataloader import kitti15list_val as DA
-    datapath = '/ssd/kitti_scene/training/'
+    datapath = '/content/dataset/data_scene_flow/training'
 elif args.dataset == '2015vallidar':
     from dataloader import kitti15list_val_lidar as DA
-    datapath = '/ssd/kitti_scene/training/'
+    datapath = '/content/dataset/data_scene_flow/training'
 elif args.dataset == 'sintelval':
     from dataloader import sintellist_val as DA
     datapath = '/ssd/rob_flow/training/'
