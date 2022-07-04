@@ -16,24 +16,24 @@ IMG_EXTENSIONS = [
 def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
+
 def dataloader(filepath):
+    left_fold = 'image_2/'
+    train = glob.glob(filepath + left_fold + '/0*.jpg')
+    train = sorted(train)
 
-  left_fold  = 'image_2/'
-  train = glob.glob(filepath+left_fold+'/0*.jpg')
-  train = sorted(train)
+    l0_train = []
+    l1_train = []
+    flow_train = []
+    count = 0
+    for img in train:
+        if count == 20: break
+        img1 = ('%s_%s.jpg' % (img.rsplit('_', 1)[0], '%05d' % (1 + int(img.split('.')[0].split('_')[-1]))))
+        flowp = img.replace('.jpg', '.png').replace('image_2', 'flow_occ')
+        if (img1 in train and len(glob.glob(flowp)) > 0 and ('01000' in img)):
+            l0_train.append(img)
+            l1_train.append(img1)
+            flow_train.append(flowp)
+            count += 1
 
-  l0_train = []
-  l1_train = []
-  flow_train = []
-  count = 0
-  for img in train:
-    if count == 20:break
-    img1 = ('%s_%s.jpg'%(img.rsplit('_',1)[0],'%05d'%(1+int(img.split('.')[0].split('_')[-1])) ))
-    flowp = img.replace('.jpg', '.png').replace('image_2','flow_occ')
-    if (img1 in train and len(glob.glob(flowp))>0 and ('01000' in img)):
-      l0_train.append(img)   
-      l1_train.append(img1)
-      flow_train.append(flowp)
-      count+=1
-
-  return l0_train, l1_train, flow_train
+    return l0_train, l1_train, flow_train
