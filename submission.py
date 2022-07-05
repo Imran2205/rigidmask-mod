@@ -133,7 +133,7 @@ elif args.dataset == 'gta':
     from dataloader import gta_dataloader_test_only as DA
 
     maxw, maxh = [int(args.testres * 1024), int(args.testres * 576)]
-    test_left_img, test_right_img, _ = DA.dataloader(args.datapath)
+    test_left_img, test_right_img, _ = DA.dataloader(args.datapath, 1500, 2500)
 else:
     from dataloader import kitti15list as DA
 
