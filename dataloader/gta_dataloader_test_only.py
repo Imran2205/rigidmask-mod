@@ -11,14 +11,12 @@ def dataloader(filepath, start, end):
     l1_train = []
     flow_train = []
 
-    copy_counter = 0
     for i, img_name in enumerate(source_images[start: end]):
         if i % skip_frames == 0:
-            if i+consecutive_gap >= len(source_images):
+            if start+i+consecutive_gap >= len(source_images):
                 break
             source_image_path_0 = os.path.join(filepath, img_name)
-            source_image_path_1 = os.path.join(filepath, source_images[i+consecutive_gap])
-            copy_counter += 1
+            source_image_path_1 = os.path.join(filepath, source_images[start+i+consecutive_gap])
 
             l0_train.append(source_image_path_0)
             l1_train.append(source_image_path_1)
@@ -31,5 +29,5 @@ if __name__ == '__main__':
     source_folder_name = "gameplay_video_1"
     source_path = f'/Users/imrankabir/Downloads/video_for_app/{source_folder_name}/img/'
     a, b, c = dataloader(source_path, 1000, 2000)
-    # print(len(a))
-    # print(b)
+    print(a[-1])
+    print(b[-1])

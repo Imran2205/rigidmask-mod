@@ -185,8 +185,12 @@ def main():
     for inx in range(len(test_left_img)):
         idxname = test_left_img[inx].split('/')[-1].split('.')[0]
         print(test_left_img[inx])
+        print(test_right_img[inx])
         imgL_o = cv2.imread(test_left_img[inx])[:, :, ::-1]
         imgR_o = cv2.imread(test_right_img[inx])[:, :, ::-1]
+
+        print(imgL_o.shape)
+        print(imgR_o.shape)
 
         # for gray input images
         if len(imgL_o.shape) == 2:
