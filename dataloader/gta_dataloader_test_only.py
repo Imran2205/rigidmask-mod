@@ -25,3 +25,11 @@ def dataloader(filepath):
             flow_train.append(source_image_path_0)
 
     return l0_train, l1_train, flow_train
+
+
+if __name__ == '__main__':
+    source_folder_name = "gameplay_video_3"
+    source_path = f'/Users/imrankabir/Downloads/video_for_app/{source_folder_name}/img/'
+    a, b, c = dataloader(source_path)
+    # print(a)
+    # print(b)
