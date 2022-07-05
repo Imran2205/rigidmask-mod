@@ -28,8 +28,8 @@ def dataloader(filepath):
 
 
 if __name__ == '__main__':
-    source_folder_name = "gameplay_video_3"
+    source_folder_name = "gameplay_video_1"
     source_path = f'/Users/imrankabir/Downloads/video_for_app/{source_folder_name}/img/'
     a, b, c = dataloader(source_path)
-    # print(a)
+    # print(len(a))
     # print(b)
