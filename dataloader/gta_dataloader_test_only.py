@@ -1,7 +1,7 @@
 import os
 
 
-def dataloader(filepath):
+def dataloader(filepath, start, end):
     source_images = [img for img in os.listdir(filepath) if '.png' in img]
     source_images.sort()
     skip_frames = 1
@@ -12,7 +12,7 @@ def dataloader(filepath):
     flow_train = []
 
     copy_counter = 0
-    for i, img_name in enumerate(source_images):
+    for i, img_name in enumerate(source_images[start: end]):
         if i % skip_frames == 0:
             if i+consecutive_gap >= len(source_images):
                 break
@@ -30,6 +30,6 @@ def dataloader(filepath):
 if __name__ == '__main__':
     source_folder_name = "gameplay_video_1"
     source_path = f'/Users/imrankabir/Downloads/video_for_app/{source_folder_name}/img/'
-    a, b, c = dataloader(source_path)
+    a, b, c = dataloader(source_path, 1000, 2000)
     # print(len(a))
     # print(b)
