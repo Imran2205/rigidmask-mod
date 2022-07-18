@@ -415,70 +415,71 @@ def main():
             save_pfm(f, flow[::-1].astype(np.float32))
         # flow vis: visualization of 2d flow vectors in the rgb space.
         flowvis = point_vec(imgL_o, flow)
-        cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
-        imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
-        cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
-        cv2.imwrite('%s/%s/warpt-%s.jpg' % (args.outdir, args.dataset, idxname), imgL_o[:, :, ::-1])
-        cv2.imwrite('%s/%s/warps-%s.jpg' % (args.outdir, args.dataset, idxname), imgR_o[:, :, ::-1])
-        with open('%s/%s/occ-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, occ[::-1].astype(np.float32))
-        with open('%s/%s/exp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, logexp[::-1].astype(np.float32))
-        with open('%s/%s/mid-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, logmid[::-1].astype(np.float32))
-        with open('%s/%s/fg-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, fgmask[::-1].astype(np.float32))
-        with open('%s/%s/hm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, heatmap[::-1].astype(np.float32))
-        with open('%s/%s/pm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, polarmask[::-1].astype(np.float32))
-        ddlib.write_calib(K0, bl, polarmask.shape, K0[0, 0] * bl / (np.median(disp) / 5),
-                          '%s/%s/calib-%s.txt' % (args.outdir, args.dataset, idxname))
-
-        # submit to KITTI benchmark
-        if 'test' in args.dataset:
-            outdir = 'benchmark_output'
-            # kitti scene flow
-            import skimage.io
-            skimage.io.imsave('%s/disp_0/%s.png' % (outdir, idxname), (disp * 256).astype('uint16'))
-            skimage.io.imsave('%s/disp_1/%s.png' % (outdir, idxname), (disp1 * 256).astype('uint16'))
-            flow[:, :, 2] = 1.
-            write_flow('%s/flow/%s.png' % (outdir, idxname.split('.')[0]), flow)
-
-        # save visualizations
-        with open('%s/%s/disp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, disp[::-1].astype(np.float32))
-
-        try:
-            # point clouds
-            from utils.fusion import pcwrite
-            hp2d0 = np.concatenate(
-                [np.tile(np.arange(0, input_size[1]).reshape(1, -1), (input_size[0], 1)).astype(float)[None],  # 1,2,H,W
-                 np.tile(np.arange(0, input_size[0]).reshape(-1, 1), (1, input_size[1])).astype(float)[None],
-                 np.ones(input_size[:2])[None]], 0).reshape(3, -1)
-            hp2d1 = hp2d0.copy()
-            hp2d1[:2] += np.transpose(flow, [2, 0, 1])[:2].reshape(2, -1)
-            p3d0 = (K0[0, 0] * bl / disp.flatten()) * np.linalg.inv(K0).dot(hp2d0)
-            p3d1 = (K0[0, 0] * bl / disp1.flatten()) * np.linalg.inv(K1).dot(hp2d1)
-
-            def write_pcs(points3d, imgL_o, mask_input, path):
-                # remove some points
-                points3d = points3d.T.reshape(input_size[:2] + (3,))
-                points3d[points3d[:, :, -1] > np.median(points3d[:, :, -1]) * 5] = 0
-                # points3d[:2*input_size[0]//5] = 0. # KITTI
-                points3d = np.concatenate([points3d, imgL_o], -1)
-                validid = np.linalg.norm(points3d[:, :, :3], 2, -1) > 0
-                bgidx = np.logical_and(validid, mask_input == 0)
-                fgidx = np.logical_and(validid, mask_input > 0)
-                pcwrite(path.replace('/pc', '/fgpc'), points3d[fgidx])
-                pcwrite(path.replace('/pc', '/bgpc'), points3d[bgidx])
-                pcwrite(path, points3d[validid])
-
-            if inx == 0:
-                write_pcs(p3d0, imgL_o, mask_input, path='%s/%s/pc0-%s.ply' % (args.outdir, args.dataset, idxname))
-                write_pcs(p3d1, imgL_o, mask_input, path='%s/%s/pc1-%s.ply' % (args.outdir, args.dataset, idxname))
-        except:
-            pass
+        print(flow)
+        # cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
+        # imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
+        # cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
+        # cv2.imwrite('%s/%s/warpt-%s.jpg' % (args.outdir, args.dataset, idxname), imgL_o[:, :, ::-1])
+        # cv2.imwrite('%s/%s/warps-%s.jpg' % (args.outdir, args.dataset, idxname), imgR_o[:, :, ::-1])
+        # with open('%s/%s/occ-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, occ[::-1].astype(np.float32))
+        # with open('%s/%s/exp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, logexp[::-1].astype(np.float32))
+        # with open('%s/%s/mid-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, logmid[::-1].astype(np.float32))
+        # with open('%s/%s/fg-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, fgmask[::-1].astype(np.float32))
+        # with open('%s/%s/hm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, heatmap[::-1].astype(np.float32))
+        # with open('%s/%s/pm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, polarmask[::-1].astype(np.float32))
+        # ddlib.write_calib(K0, bl, polarmask.shape, K0[0, 0] * bl / (np.median(disp) / 5),
+        #                   '%s/%s/calib-%s.txt' % (args.outdir, args.dataset, idxname))
+        #
+        # # submit to KITTI benchmark
+        # if 'test' in args.dataset:
+        #     outdir = 'benchmark_output'
+        #     # kitti scene flow
+        #     import skimage.io
+        #     skimage.io.imsave('%s/disp_0/%s.png' % (outdir, idxname), (disp * 256).astype('uint16'))
+        #     skimage.io.imsave('%s/disp_1/%s.png' % (outdir, idxname), (disp1 * 256).astype('uint16'))
+        #     flow[:, :, 2] = 1.
+        #     write_flow('%s/flow/%s.png' % (outdir, idxname.split('.')[0]), flow)
+        #
+        # # save visualizations
+        # with open('%s/%s/disp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, disp[::-1].astype(np.float32))
+        #
+        # try:
+        #     # point clouds
+        #     from utils.fusion import pcwrite
+        #     hp2d0 = np.concatenate(
+        #         [np.tile(np.arange(0, input_size[1]).reshape(1, -1), (input_size[0], 1)).astype(float)[None],  # 1,2,H,W
+        #          np.tile(np.arange(0, input_size[0]).reshape(-1, 1), (1, input_size[1])).astype(float)[None],
+        #          np.ones(input_size[:2])[None]], 0).reshape(3, -1)
+        #     hp2d1 = hp2d0.copy()
+        #     hp2d1[:2] += np.transpose(flow, [2, 0, 1])[:2].reshape(2, -1)
+        #     p3d0 = (K0[0, 0] * bl / disp.flatten()) * np.linalg.inv(K0).dot(hp2d0)
+        #     p3d1 = (K0[0, 0] * bl / disp1.flatten()) * np.linalg.inv(K1).dot(hp2d1)
+        #
+        #     def write_pcs(points3d, imgL_o, mask_input, path):
+        #         # remove some points
+        #         points3d = points3d.T.reshape(input_size[:2] + (3,))
+        #         points3d[points3d[:, :, -1] > np.median(points3d[:, :, -1]) * 5] = 0
+        #         # points3d[:2*input_size[0]//5] = 0. # KITTI
+        #         points3d = np.concatenate([points3d, imgL_o], -1)
+        #         validid = np.linalg.norm(points3d[:, :, :3], 2, -1) > 0
+        #         bgidx = np.logical_and(validid, mask_input == 0)
+        #         fgidx = np.logical_and(validid, mask_input > 0)
+        #         pcwrite(path.replace('/pc', '/fgpc'), points3d[fgidx])
+        #         pcwrite(path.replace('/pc', '/bgpc'), points3d[bgidx])
+        #         pcwrite(path, points3d[validid])
+        #
+        #     if inx == 0:
+        #         write_pcs(p3d0, imgL_o, mask_input, path='%s/%s/pc0-%s.ply' % (args.outdir, args.dataset, idxname))
+        #         write_pcs(p3d1, imgL_o, mask_input, path='%s/%s/pc1-%s.ply' % (args.outdir, args.dataset, idxname))
+        # except:
+        #     pass
         torch.cuda.empty_cache()
     print(np.mean(ttime_all))
 
