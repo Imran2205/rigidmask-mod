@@ -58,6 +58,7 @@ def point_vec(img,flow,skip=10):
             dispimg = cv2.arrowedLine(dispimg, (meshgrid[0][j,i]*resize_factor,meshgrid[1][j,i]*resize_factor),\
                                       (xend,yend),
                                       (int(colorflow[j,i,2]),int(colorflow[j,i,1]),int(colorflow[j,i,0])),4,tipLength=2/leng,line_type=cv2.LINE_AA)
+
     return dispimg
 
 def visualize_flow(flow, mode='Y'):

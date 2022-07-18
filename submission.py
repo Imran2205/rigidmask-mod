@@ -408,14 +408,14 @@ def main():
                                                              tipLength=float(30. / np.linalg.norm(direct)))
                 except:
                     pdb.set_trace()
-        cv2.imwrite('%s/%s/mvis-%s.jpg' % (args.outdir, args.dataset, idxname), ins_center_vis[:, :, ::-1])
+        # cv2.imwrite('%s/%s/mvis-%s.jpg' % (args.outdir, args.dataset, idxname), ins_center_vis[:, :, ::-1])
 
         # save predictions
-        with open('%s/%s/flo-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-            save_pfm(f, flow[::-1].astype(np.float32))
+        # with open('%s/%s/flo-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+        #     save_pfm(f, flow[::-1].astype(np.float32))
         # flow vis: visualization of 2d flow vectors in the rgb space.
-        flowvis = point_vec(imgL_o, flow)
-        print(flow)
+        # flowvis = point_vec(imgL_o, flow)
+        np.save('%s/%s/flow-%s' % (args.outdir, args.dataset, idxname), flow)
         # cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
         # imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
         # cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
