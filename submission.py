@@ -16,7 +16,7 @@ import torch.nn.functional as F
 import time
 from utils.io import mkdir_p
 from utils.util_flow import save_pfm, write_flow
-from utils.flowlib import write_flo, point_vec
+from utils.flowlib import write_flo, point_vec, point_vector_to_flow_line
 from dataloader.exploader import disparity_loader
 from utils import dydepth as ddlib
 
@@ -414,8 +414,8 @@ def main():
         # with open('%s/%s/flo-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
         #     save_pfm(f, flow[::-1].astype(np.float32))
         # flow vis: visualization of 2d flow vectors in the rgb space.
-        # flowvis = point_vec(imgL_o, flow)
-        np.save('%s/%s/flow-%s' % (args.outdir, args.dataset, idxname), flow)
+        flowvis = point_vector_to_flow_line(imgL_o, flow)
+        np.save('%s/%s/flow-%s' % (args.outdir, args.dataset, idxname), flowvis)
         # cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
         # imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
         # cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
