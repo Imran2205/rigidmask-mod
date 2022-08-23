@@ -61,6 +61,44 @@ def point_vec(img,flow,skip=10):
 
     return dispimg
 
+def point_vector_to_flow_line(img, flow, maxsize=1000., extend_fac=2.):
+    """
+    this function generates two arrays which represent the flow of pixels in
+    two consecutive frames
+    :param img: second image of two consecutive frames
+    :param flow: point vector output of scene flow network
+    :param skip:
+    :param maxsize:
+    :param extend_fac:
+    :return: returns two arrays, one for old pixel position and one for the new
+    """
+    resize_factor = max(1, int(max(maxsize/img.shape[0], maxsize/img.shape[1])))
+    mesh_grid = np.meshgrid(range(img.shape[1]), range(img.shape[0]))
+    flow_array = np.zeros((img.shape[0], img.shape[1], 2), dtype=int)
+
+    for ii in range(img.shape[1]):
+        for jj in range(img.shape[0]):
+            # if flow[jj, ii, 2] != 1:
+            #     continue
+            # if jj % skip != 0 or ii % skip != 0:
+            #     continue
+            
+            x_start = mesh_grid[0][jj, ii] * resize_factor
+            y_start = mesh_grid[1][jj, ii] * resize_factor
+            x_end = int((mesh_grid[0][jj, ii] + extend_fac * flow[jj, ii, 0]) * resize_factor)
+            y_end = int((mesh_grid[1][jj, ii] + extend_fac * flow[jj, ii, 1]) * resize_factor)
+            len_g = np.linalg.norm(flow[jj, ii, :2] * extend_fac)
+            # if len_g < 1:
+            #     continue
+
+            #if y_start >= 0 and y_start < img.shape[0] and x_start >= 0 and x_start < img.shape[1] and \
+            #    y_end >= 0 and y_end < img.shape[0] and x_end >= 0 and x_end < img.shape[1]:
+            #     f_0_pos.append(np.array([y_start, x_start]))
+            #     f_1_pos.append(np.array([y_end, x_end]))
+            flow_array[y_start][x_start] = np.array([y_end, x_end])
+    flow_array = flow_array.astype(np.int16)
+    return flow_array
+
 def visualize_flow(flow, mode='Y'):
     """
     this function visualize the input flow
