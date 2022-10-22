@@ -29,5 +29,5 @@ if __name__ == '__main__':
     source_folder_name = "gameplay_video_1"
     source_path = f'/Users/imrankabir/Downloads/video_for_app/{source_folder_name}/img/'
     a, b, c = dataloader(source_path, 1000, 2000)
-    print(a[-1])
-    print(b[-1])
+    print(a[0])
+    print(b[0])
