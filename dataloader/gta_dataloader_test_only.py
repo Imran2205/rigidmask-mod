@@ -11,6 +11,9 @@ def dataloader(filepath, start, end):
     l1_train = []
     flow_train = []
 
+    if end > len(source_images) or end == -1:
+        end = len(source_images)
+
     for i, img_name in enumerate(source_images[start: end]):
         if i % skip_frames == 0:
             if start+i+consecutive_gap >= len(source_images):
