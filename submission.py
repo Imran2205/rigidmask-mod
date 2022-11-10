@@ -415,10 +415,7 @@ def main():
         #     save_pfm(f, flow[::-1].astype(np.float32))
         # flow vis: visualization of 2d flow vectors in the rgb space.
         flowvis = point_vector_to_flow_line(imgL_o, flow)
-        npy_save_path = '%s/%s/%s' % (args.outdir, args.dataset, idxname.split('_')[0])
-        if not os.path.exists(npy_save_path):
-            os.makedirs(npy_save_path)
-        np.save(os.path.join(npy_save_path, idxname), flowvis)
+        np.save('%s/%s/flow-%s' % (args.outdir, args.dataset, idxname), flowvis)
         # cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
         # imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
         # cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
