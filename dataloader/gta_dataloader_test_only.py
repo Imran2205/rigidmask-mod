@@ -1,8 +1,14 @@
 import os
+import glob
 
 
 def dataloader(filepath, start, end):
-    source_images = [img for img in os.listdir(filepath) if img.endswith(['.png', '.jpg'])]
+    # source_images = [img for img in os.listdir(filepath) if img.endswith(('.png', '.jpg'))]
+    source_images = glob.glob(
+        os.path.join(
+            f'{filepath}',
+            f'*.jpg')
+    )
     source_images.sort()
     skip_frames = 1
     consecutive_gap = 1
