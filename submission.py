@@ -134,7 +134,7 @@ elif args.dataset == 'gta':
 
     maxw, maxh = [int(args.testres * 480), int(args.testres * 270)]
     test_left_img, test_right_img, _ = DA.dataloader(args.datapath, 0, -1)
-    print(">>>>>>>>> total images: ", test_left_img, test_right_img)
+    print(">>>>>>>>> total images: ", len(test_left_img), len(test_right_img))
 else:
     from dataloader import kitti15list as DA
 
