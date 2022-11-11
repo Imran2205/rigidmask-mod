@@ -189,6 +189,9 @@ def main():
         imgL_o = cv2.imread(test_left_img[inx])[:, :, ::-1]
         imgR_o = cv2.imread(test_right_img[inx])[:, :, ::-1]
 
+        imgL_o = cv2.resize(imgL_o, (480, 270))
+        imgR_o = cv2.resize(imgR_o, (480, 270))
+
         # for gray input images
         if len(imgL_o.shape) == 2:
             imgL_o = np.tile(imgL_o[:, :, np.newaxis], (1, 1, 3))
