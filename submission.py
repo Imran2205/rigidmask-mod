@@ -298,192 +298,195 @@ def main():
         # forward
         imgL = Variable(torch.FloatTensor(imgL).cuda())
         imgR = Variable(torch.FloatTensor(imgR).cuda())
-        with torch.no_grad():
-            imgLR = torch.cat([imgL, imgR], 0)
-            model.eval()
-            torch.cuda.synchronize()
-            start_time = time.time()
-            rts = model(imgLR, disc_aux, disp_input)
-            torch.cuda.synchronize()
-            ttime = (time.time() - start_time);
-            print('time = %.2f' % (ttime * 1000))
-            ttime_all.append(ttime)
-            flow, occ, logmid, logexp, fgmask, heatmap, polarmask, disp = rts
-            bbox = polarmask['bbox']
-            polarmask = polarmask['mask']
-            polarcontour = polarmask[:polarmask.shape[0] // 2]
-            polarmask = polarmask[polarmask.shape[0] // 2:]
+        try:
+            with torch.no_grad():
+                imgLR = torch.cat([imgL, imgR], 0)
+                model.eval()
+                torch.cuda.synchronize()
+                start_time = time.time()
+                rts = model(imgLR, disc_aux, disp_input)
+                torch.cuda.synchronize()
+                ttime = (time.time() - start_time);
+                print('time = %.2f' % (ttime * 1000))
+                ttime_all.append(ttime)
+                flow, occ, logmid, logexp, fgmask, heatmap, polarmask, disp = rts
+                bbox = polarmask['bbox']
+                polarmask = polarmask['mask']
+                polarcontour = polarmask[:polarmask.shape[0] // 2]
+                polarmask = polarmask[polarmask.shape[0] // 2:]
 
-        # upsampling
-        occ = cv2.resize(occ.data.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
-        logexp = cv2.resize(logexp.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
-        logmid = cv2.resize(logmid.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
-        fgmask = cv2.resize(fgmask.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
-        heatmap = cv2.resize(heatmap.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
-        polarcontour = cv2.resize(polarcontour, (input_size[1], input_size[0]), interpolation=cv2.INTER_NEAREST)
-        polarmask = cv2.resize(polarmask, (input_size[1], input_size[0]), interpolation=cv2.INTER_NEAREST).astype(int)
-        polarmask[np.logical_and(fgmask > 0, polarmask == 0)] = -1
-        if args.disp_path == '':
-            disp = cv2.resize(disp.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
-        else:
-            disp = np.asarray(disp_input.cpu())[0, 0]
-        flow = torch.squeeze(flow).data.cpu().numpy()
-        flow = np.concatenate([cv2.resize(flow[0], (input_size[1], input_size[0]))[:, :, np.newaxis],
-                               cv2.resize(flow[1], (input_size[1], input_size[0]))[:, :, np.newaxis]], -1)
-        flow[:, :, 0] *= imgL_o.shape[1] / max_w
-        flow[:, :, 1] *= imgL_o.shape[0] / max_h
-        flow = np.concatenate((flow, np.ones([flow.shape[0], flow.shape[1], 1])), -1)
-        bbox[:, 0] *= imgL_o.shape[1] / max_w
-        bbox[:, 2] *= imgL_o.shape[1] / max_w
-        bbox[:, 1] *= imgL_o.shape[0] / max_h
-        bbox[:, 3] *= imgL_o.shape[0] / max_h
-
-        # draw instance center and motion in 2D
-        ins_center_vis = np.zeros(flow.shape[:2])
-        for k in range(bbox.shape[0]):
-            from utils.detlib import draw_umich_gaussian
-            draw_umich_gaussian(ins_center_vis, bbox[k, :4].reshape(2, 2).mean(0), 15)
-        ins_center_vis = 256 * np.stack(
-            [ins_center_vis, np.zeros(ins_center_vis.shape), np.zeros(ins_center_vis.shape)], -1)
-        if args.refine:
-            ## depth and scene flow estimation
-            # save initial disp and flow
-            init_disp = disp.copy()
-            init_flow = flow.copy()
-            init_logmid = logmid.copy()
-
-            if args.mask_path == '':
-                mask_input = polarmask
+            # upsampling
+            occ = cv2.resize(occ.data.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
+            logexp = cv2.resize(logexp.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
+            logmid = cv2.resize(logmid.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
+            fgmask = cv2.resize(fgmask.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
+            heatmap = cv2.resize(heatmap.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
+            polarcontour = cv2.resize(polarcontour, (input_size[1], input_size[0]), interpolation=cv2.INTER_NEAREST)
+            polarmask = cv2.resize(polarmask, (input_size[1], input_size[0]), interpolation=cv2.INTER_NEAREST).astype(int)
+            polarmask[np.logical_and(fgmask > 0, polarmask == 0)] = -1
+            if args.disp_path == '':
+                disp = cv2.resize(disp.cpu().numpy(), (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
             else:
-                mask_input = cv2.imread('%s/%s.png' % (args.mask_path, idxname), 0)
-                if mask_input is None:
-                    mask_input = cv2.imread('%s/%s.png' % (args.mask_path, idxname.split('_')[0]), 0)
+                disp = np.asarray(disp_input.cpu())[0, 0]
+            flow = torch.squeeze(flow).data.cpu().numpy()
+            flow = np.concatenate([cv2.resize(flow[0], (input_size[1], input_size[0]))[:, :, np.newaxis],
+                                   cv2.resize(flow[1], (input_size[1], input_size[0]))[:, :, np.newaxis]], -1)
+            flow[:, :, 0] *= imgL_o.shape[1] / max_w
+            flow[:, :, 1] *= imgL_o.shape[0] / max_h
+            flow = np.concatenate((flow, np.ones([flow.shape[0], flow.shape[1], 1])), -1)
+            bbox[:, 0] *= imgL_o.shape[1] / max_w
+            bbox[:, 2] *= imgL_o.shape[1] / max_w
+            bbox[:, 1] *= imgL_o.shape[0] / max_h
+            bbox[:, 3] *= imgL_o.shape[0] / max_h
 
-            bgmask = (mask_input == 0)
-            scene_type, T01_c, R01, RTs = ddlib.rb_fitting(bgmask, mask_input, disp, flow, occ, K0, K1, bl,
-                                                           parallax_th=4, mono=(args.sensor == 'mono'),
-                                                           sintel='Sintel' in idxname)
-            print('camera trans: ');
-            print(T01_c)
-            disp, flow, disp1 = ddlib.mod_flow(bgmask, mask_input, disp, disp / np.exp(logmid), flow, occ, bl, K0, K1,
-                                               scene_type, T01_c, R01, RTs, fgmask, mono=(args.sensor == 'mono'),
-                                               sintel='Sintel' in idxname)
-            logmid = np.clip(np.log(disp / disp1), -1, 1)
+            # draw instance center and motion in 2D
+            ins_center_vis = np.zeros(flow.shape[:2])
+            for k in range(bbox.shape[0]):
+                from utils.detlib import draw_umich_gaussian
+                draw_umich_gaussian(ins_center_vis, bbox[k, :4].reshape(2, 2).mean(0), 15)
+            ins_center_vis = 256 * np.stack(
+                [ins_center_vis, np.zeros(ins_center_vis.shape), np.zeros(ins_center_vis.shape)], -1)
+            if args.refine:
+                ## depth and scene flow estimation
+                # save initial disp and flow
+                init_disp = disp.copy()
+                init_flow = flow.copy()
+                init_logmid = logmid.copy()
 
-            # draw ego vehicle
-            ct = [4 * input_size[0] // 5, input_size[1] // 2][::-1]
-            cv2.circle(ins_center_vis, tuple(ct), radius=10, color=(0, 255, 255), thickness=10)
-            obj_3d = K0[0, 0] * bl / np.median(disp[bgmask]) * np.linalg.inv(K0).dot(np.hstack([ct, np.ones(1)]))
-            obj_3d2 = obj_3d + (-R01.T.dot(T01_c))
-            ed = K0.dot(obj_3d2)
-            ed = (ed[:2] / ed[-1]).astype(int)
-            if args.sensor == 'mono':
-                direct = (ed - ct)
-                direct = 50 * direct / (1e-9 + np.linalg.norm(direct))
-            else:
-                direct = (ed - ct)
-            ed = (ct + direct).astype(int)
-            if np.linalg.norm(direct) > 1:
-                ins_center_vis = cv2.arrowedLine(ins_center_vis, tuple(ct), tuple(ed), (0, 255, 255), 6,
-                                                 tipLength=float(30. / np.linalg.norm(direct)))
+                if args.mask_path == '':
+                    mask_input = polarmask
+                else:
+                    mask_input = cv2.imread('%s/%s.png' % (args.mask_path, idxname), 0)
+                    if mask_input is None:
+                        mask_input = cv2.imread('%s/%s.png' % (args.mask_path, idxname.split('_')[0]), 0)
 
-            # draw each object
-            for k in range(mask_input.max()):
-                try:
-                    obj_mask = mask_input == k + 1
-                    if obj_mask.sum() == 0: continue
-                    ct = np.asarray(np.nonzero(obj_mask)).mean(1).astype(int)[::-1]  # Nx2
-                    cv2.circle(ins_center_vis, tuple(ct), radius=5, color=(255, 0, 0), thickness=5)
-                    if RTs[k] is not None:
-                        # ins_center_vis[mask_input==k+1] = imgL_o[mask_input==k+1]
-                        obj_3d = K0[0, 0] * bl / np.median(disp[mask_input == k + 1]) * np.linalg.inv(K0).dot(
-                            np.hstack([ct, np.ones(1)]))
-                        obj_3d2 = obj_3d + (-RTs[k][0].T.dot(RTs[k][1]))
-                        ed = K0.dot(obj_3d2)
-                        ed = (ed[:2] / ed[-1]).astype(int)
-                        if args.sensor == 'mono':
-                            direct = (ed - ct)
-                            direct = 50 * direct / (np.linalg.norm(direct) + 1e-9)
-                        else:
-                            direct = (ed - ct)
-                        ed = (ct + direct).astype(int)
-                        if np.linalg.norm(direct) > 1:
-                            ins_center_vis = cv2.arrowedLine(ins_center_vis, tuple(ct), tuple(ed), (255, 0, 0), 3,
-                                                             tipLength=float(30. / np.linalg.norm(direct)))
-                except:
-                    pdb.set_trace()
-        # cv2.imwrite('%s/%s/mvis-%s.jpg' % (args.outdir, args.dataset, idxname), ins_center_vis[:, :, ::-1])
+                bgmask = (mask_input == 0)
+                scene_type, T01_c, R01, RTs = ddlib.rb_fitting(bgmask, mask_input, disp, flow, occ, K0, K1, bl,
+                                                               parallax_th=4, mono=(args.sensor == 'mono'),
+                                                               sintel='Sintel' in idxname)
+                print('camera trans: ');
+                print(T01_c)
+                disp, flow, disp1 = ddlib.mod_flow(bgmask, mask_input, disp, disp / np.exp(logmid), flow, occ, bl, K0, K1,
+                                                   scene_type, T01_c, R01, RTs, fgmask, mono=(args.sensor == 'mono'),
+                                                   sintel='Sintel' in idxname)
+                logmid = np.clip(np.log(disp / disp1), -1, 1)
 
-        # save predictions
-        # with open('%s/%s/flo-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, flow[::-1].astype(np.float32))
-        # flow vis: visualization of 2d flow vectors in the rgb space.
-        flowvis = point_vector_to_flow_line(imgL_o, flow)
-        np.save('%s/%s/flow-%s' % (args.outdir, args.dataset, idxname), flowvis)
-        # cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
-        # imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
-        # cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
-        # cv2.imwrite('%s/%s/warpt-%s.jpg' % (args.outdir, args.dataset, idxname), imgL_o[:, :, ::-1])
-        # cv2.imwrite('%s/%s/warps-%s.jpg' % (args.outdir, args.dataset, idxname), imgR_o[:, :, ::-1])
-        # with open('%s/%s/occ-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, occ[::-1].astype(np.float32))
-        # with open('%s/%s/exp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, logexp[::-1].astype(np.float32))
-        # with open('%s/%s/mid-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, logmid[::-1].astype(np.float32))
-        # with open('%s/%s/fg-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, fgmask[::-1].astype(np.float32))
-        # with open('%s/%s/hm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, heatmap[::-1].astype(np.float32))
-        # with open('%s/%s/pm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, polarmask[::-1].astype(np.float32))
-        # ddlib.write_calib(K0, bl, polarmask.shape, K0[0, 0] * bl / (np.median(disp) / 5),
-        #                   '%s/%s/calib-%s.txt' % (args.outdir, args.dataset, idxname))
-        #
-        # # submit to KITTI benchmark
-        # if 'test' in args.dataset:
-        #     outdir = 'benchmark_output'
-        #     # kitti scene flow
-        #     import skimage.io
-        #     skimage.io.imsave('%s/disp_0/%s.png' % (outdir, idxname), (disp * 256).astype('uint16'))
-        #     skimage.io.imsave('%s/disp_1/%s.png' % (outdir, idxname), (disp1 * 256).astype('uint16'))
-        #     flow[:, :, 2] = 1.
-        #     write_flow('%s/flow/%s.png' % (outdir, idxname.split('.')[0]), flow)
-        #
-        # # save visualizations
-        # with open('%s/%s/disp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
-        #     save_pfm(f, disp[::-1].astype(np.float32))
-        #
-        # try:
-        #     # point clouds
-        #     from utils.fusion import pcwrite
-        #     hp2d0 = np.concatenate(
-        #         [np.tile(np.arange(0, input_size[1]).reshape(1, -1), (input_size[0], 1)).astype(float)[None],  # 1,2,H,W
-        #          np.tile(np.arange(0, input_size[0]).reshape(-1, 1), (1, input_size[1])).astype(float)[None],
-        #          np.ones(input_size[:2])[None]], 0).reshape(3, -1)
-        #     hp2d1 = hp2d0.copy()
-        #     hp2d1[:2] += np.transpose(flow, [2, 0, 1])[:2].reshape(2, -1)
-        #     p3d0 = (K0[0, 0] * bl / disp.flatten()) * np.linalg.inv(K0).dot(hp2d0)
-        #     p3d1 = (K0[0, 0] * bl / disp1.flatten()) * np.linalg.inv(K1).dot(hp2d1)
-        #
-        #     def write_pcs(points3d, imgL_o, mask_input, path):
-        #         # remove some points
-        #         points3d = points3d.T.reshape(input_size[:2] + (3,))
-        #         points3d[points3d[:, :, -1] > np.median(points3d[:, :, -1]) * 5] = 0
-        #         # points3d[:2*input_size[0]//5] = 0. # KITTI
-        #         points3d = np.concatenate([points3d, imgL_o], -1)
-        #         validid = np.linalg.norm(points3d[:, :, :3], 2, -1) > 0
-        #         bgidx = np.logical_and(validid, mask_input == 0)
-        #         fgidx = np.logical_and(validid, mask_input > 0)
-        #         pcwrite(path.replace('/pc', '/fgpc'), points3d[fgidx])
-        #         pcwrite(path.replace('/pc', '/bgpc'), points3d[bgidx])
-        #         pcwrite(path, points3d[validid])
-        #
-        #     if inx == 0:
-        #         write_pcs(p3d0, imgL_o, mask_input, path='%s/%s/pc0-%s.ply' % (args.outdir, args.dataset, idxname))
-        #         write_pcs(p3d1, imgL_o, mask_input, path='%s/%s/pc1-%s.ply' % (args.outdir, args.dataset, idxname))
-        # except:
-        #     pass
+                # draw ego vehicle
+                ct = [4 * input_size[0] // 5, input_size[1] // 2][::-1]
+                cv2.circle(ins_center_vis, tuple(ct), radius=10, color=(0, 255, 255), thickness=10)
+                obj_3d = K0[0, 0] * bl / np.median(disp[bgmask]) * np.linalg.inv(K0).dot(np.hstack([ct, np.ones(1)]))
+                obj_3d2 = obj_3d + (-R01.T.dot(T01_c))
+                ed = K0.dot(obj_3d2)
+                ed = (ed[:2] / ed[-1]).astype(int)
+                if args.sensor == 'mono':
+                    direct = (ed - ct)
+                    direct = 50 * direct / (1e-9 + np.linalg.norm(direct))
+                else:
+                    direct = (ed - ct)
+                ed = (ct + direct).astype(int)
+                if np.linalg.norm(direct) > 1:
+                    ins_center_vis = cv2.arrowedLine(ins_center_vis, tuple(ct), tuple(ed), (0, 255, 255), 6,
+                                                     tipLength=float(30. / np.linalg.norm(direct)))
+
+                # draw each object
+                for k in range(mask_input.max()):
+                    try:
+                        obj_mask = mask_input == k + 1
+                        if obj_mask.sum() == 0: continue
+                        ct = np.asarray(np.nonzero(obj_mask)).mean(1).astype(int)[::-1]  # Nx2
+                        cv2.circle(ins_center_vis, tuple(ct), radius=5, color=(255, 0, 0), thickness=5)
+                        if RTs[k] is not None:
+                            # ins_center_vis[mask_input==k+1] = imgL_o[mask_input==k+1]
+                            obj_3d = K0[0, 0] * bl / np.median(disp[mask_input == k + 1]) * np.linalg.inv(K0).dot(
+                                np.hstack([ct, np.ones(1)]))
+                            obj_3d2 = obj_3d + (-RTs[k][0].T.dot(RTs[k][1]))
+                            ed = K0.dot(obj_3d2)
+                            ed = (ed[:2] / ed[-1]).astype(int)
+                            if args.sensor == 'mono':
+                                direct = (ed - ct)
+                                direct = 50 * direct / (np.linalg.norm(direct) + 1e-9)
+                            else:
+                                direct = (ed - ct)
+                            ed = (ct + direct).astype(int)
+                            if np.linalg.norm(direct) > 1:
+                                ins_center_vis = cv2.arrowedLine(ins_center_vis, tuple(ct), tuple(ed), (255, 0, 0), 3,
+                                                                 tipLength=float(30. / np.linalg.norm(direct)))
+                    except:
+                        pdb.set_trace()
+            # cv2.imwrite('%s/%s/mvis-%s.jpg' % (args.outdir, args.dataset, idxname), ins_center_vis[:, :, ::-1])
+
+            # save predictions
+            # with open('%s/%s/flo-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, flow[::-1].astype(np.float32))
+            # flow vis: visualization of 2d flow vectors in the rgb space.
+            flowvis = point_vector_to_flow_line(imgL_o, flow)
+            np.save('%s/%s/flow-%s' % (args.outdir, args.dataset, idxname), flowvis)
+            # cv2.imwrite('%s/%s/visflo-%s.jpg' % (args.outdir, args.dataset, idxname), flowvis)
+            # imwarped = ddlib.warp_flow(imgR_o, flow[:, :, :2])
+            # cv2.imwrite('%s/%s/warp-%s.jpg' % (args.outdir, args.dataset, idxname), imwarped[:, :, ::-1])
+            # cv2.imwrite('%s/%s/warpt-%s.jpg' % (args.outdir, args.dataset, idxname), imgL_o[:, :, ::-1])
+            # cv2.imwrite('%s/%s/warps-%s.jpg' % (args.outdir, args.dataset, idxname), imgR_o[:, :, ::-1])
+            # with open('%s/%s/occ-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, occ[::-1].astype(np.float32))
+            # with open('%s/%s/exp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, logexp[::-1].astype(np.float32))
+            # with open('%s/%s/mid-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, logmid[::-1].astype(np.float32))
+            # with open('%s/%s/fg-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, fgmask[::-1].astype(np.float32))
+            # with open('%s/%s/hm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, heatmap[::-1].astype(np.float32))
+            # with open('%s/%s/pm-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, polarmask[::-1].astype(np.float32))
+            # ddlib.write_calib(K0, bl, polarmask.shape, K0[0, 0] * bl / (np.median(disp) / 5),
+            #                   '%s/%s/calib-%s.txt' % (args.outdir, args.dataset, idxname))
+            #
+            # # submit to KITTI benchmark
+            # if 'test' in args.dataset:
+            #     outdir = 'benchmark_output'
+            #     # kitti scene flow
+            #     import skimage.io
+            #     skimage.io.imsave('%s/disp_0/%s.png' % (outdir, idxname), (disp * 256).astype('uint16'))
+            #     skimage.io.imsave('%s/disp_1/%s.png' % (outdir, idxname), (disp1 * 256).astype('uint16'))
+            #     flow[:, :, 2] = 1.
+            #     write_flow('%s/flow/%s.png' % (outdir, idxname.split('.')[0]), flow)
+            #
+            # # save visualizations
+            # with open('%s/%s/disp-%s.pfm' % (args.outdir, args.dataset, idxname), 'w') as f:
+            #     save_pfm(f, disp[::-1].astype(np.float32))
+            #
+            # try:
+            #     # point clouds
+            #     from utils.fusion import pcwrite
+            #     hp2d0 = np.concatenate(
+            #         [np.tile(np.arange(0, input_size[1]).reshape(1, -1), (input_size[0], 1)).astype(float)[None],  # 1,2,H,W
+            #          np.tile(np.arange(0, input_size[0]).reshape(-1, 1), (1, input_size[1])).astype(float)[None],
+            #          np.ones(input_size[:2])[None]], 0).reshape(3, -1)
+            #     hp2d1 = hp2d0.copy()
+            #     hp2d1[:2] += np.transpose(flow, [2, 0, 1])[:2].reshape(2, -1)
+            #     p3d0 = (K0[0, 0] * bl / disp.flatten()) * np.linalg.inv(K0).dot(hp2d0)
+            #     p3d1 = (K0[0, 0] * bl / disp1.flatten()) * np.linalg.inv(K1).dot(hp2d1)
+            #
+            #     def write_pcs(points3d, imgL_o, mask_input, path):
+            #         # remove some points
+            #         points3d = points3d.T.reshape(input_size[:2] + (3,))
+            #         points3d[points3d[:, :, -1] > np.median(points3d[:, :, -1]) * 5] = 0
+            #         # points3d[:2*input_size[0]//5] = 0. # KITTI
+            #         points3d = np.concatenate([points3d, imgL_o], -1)
+            #         validid = np.linalg.norm(points3d[:, :, :3], 2, -1) > 0
+            #         bgidx = np.logical_and(validid, mask_input == 0)
+            #         fgidx = np.logical_and(validid, mask_input > 0)
+            #         pcwrite(path.replace('/pc', '/fgpc'), points3d[fgidx])
+            #         pcwrite(path.replace('/pc', '/bgpc'), points3d[bgidx])
+            #         pcwrite(path, points3d[validid])
+            #
+            #     if inx == 0:
+            #         write_pcs(p3d0, imgL_o, mask_input, path='%s/%s/pc0-%s.ply' % (args.outdir, args.dataset, idxname))
+            #         write_pcs(p3d1, imgL_o, mask_input, path='%s/%s/pc1-%s.ply' % (args.outdir, args.dataset, idxname))
+            # except:
+            #     pass
+        except Exception as e:
+            print(e)
         torch.cuda.empty_cache()
     print(np.mean(ttime_all))
 
