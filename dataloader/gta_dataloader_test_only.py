@@ -7,7 +7,7 @@ def dataloader(filepath, start, end):
     source_images = glob.glob(
         os.path.join(
             f'{filepath}',
-            f'*.jpg')
+            f'*.png')
     )
     source_images.sort()
     skip_frames = 1
