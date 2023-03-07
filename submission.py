@@ -486,7 +486,9 @@ def main():
             # except:
             #     pass
         except Exception as e:
+            print(">>>>>ERROR<<<<<")
             print(e)
+            print(">>>>>END ERROR<<<<<")
         torch.cuda.empty_cache()
     print(np.mean(ttime_all))
 
