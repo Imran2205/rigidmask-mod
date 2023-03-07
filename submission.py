@@ -121,7 +121,6 @@ elif args.dataset == 'viper':
     test_left_img, test_right_img, _ = DA.dataloader(args.datapath)
 elif args.dataset == 'viper_test':
     from dataloader import viperlist_test as DA
-
     maxw, maxh = [int(args.testres * 1024), int(args.testres * 448)]
     test_left_img, test_right_img, _ = DA.dataloader(args.datapath)
 elif args.dataset == 'tum':
@@ -160,6 +159,7 @@ model = nn.DataParallel(model, device_ids=[0])
 model.cuda()
 
 if args.loadmodel is not None:
+    print(">>>>>> Loading model from: ", args.loadmodel)
     pretrained_dict = torch.load(args.loadmodel, map_location='cpu')
     mean_L = pretrained_dict['mean_L']
     mean_R = pretrained_dict['mean_R']
